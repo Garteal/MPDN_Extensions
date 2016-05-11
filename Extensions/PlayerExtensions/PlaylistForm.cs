@@ -422,7 +422,7 @@ namespace Mpdn.Extensions.PlayerExtensions.Playlist
                 {
                     path = i.FilePath.Substring(0, i.FilePath.LastIndexOf('/'));
                     directory = path.Substring(path.LastIndexOf('/') + 1);
-                    file = Path.GetFileName(i.FilePath);
+                    file = i.Title;
                 }
                 else
                 {
@@ -959,6 +959,7 @@ namespace Mpdn.Extensions.PlayerExtensions.Playlist
                         DisposeLoadNextTask();
                         Media.Open(item.FilePath, !queue);
                     }
+
                     SetPlayStyling();
                 }
                 else
@@ -1907,23 +1908,6 @@ namespace Mpdn.Extensions.PlayerExtensions.Playlist
 
         #region Helper Methods
 
-        private string FetchTitleFromUrl(string url)
-        {
-            try
-            {
-                if (!IsValidUrl(url)) return string.Empty;
-
-                string regex = @"(?<=<title.*>)([\s\S]*)(?=</title>)";
-
-                var client = new WebClient();
-                string page = client.DownloadString(url);
-
-                return HttpUtility.HtmlDecode(Regex.Match(page, regex).Value).Trim();
-            }
-            catch (WebException) { return null; }
-            catch (Exception) { return null; }
-        }
-
         private bool IsValidUrl(string url)
         {
             Uri uriResult;
@@ -2101,18 +2085,14 @@ namespace Mpdn.Extensions.PlayerExtensions.Playlist
 
             if (CurrentItem == null) return;
 
-            // TODO: Use a separate thread to fetch (and cache in settings file) and update title
-            // Note: The following doesn't work very well - it blocks the player UI
-//            if (IsValidUrl(CurrentItem.FilePath))
-//            {
-//                string title = FetchTitleFromUrl(CurrentItem.FilePath);
-//                Text = Player.State + " - " + title;
-//                if (dgv_PlayList.CurrentRow == null)
-//                    dgv_PlayList.CurrentCell = dgv_PlayList.Rows[Math.Max(0, m_CurrentPlayIndex)].Cells[0];
-//                if (dgv_PlayList.CurrentRow != null)
-//                    dgv_PlayList.CurrentRow.Cells[m_TitleCellIndex].Value = title;
-//            }
-//            else
+            if (IsValidUrl(CurrentItem.FilePath))
+            {
+                CurrentItem.Title = YouTubeSourceProvider.Title;
+                Text = Player.State + " - " + YouTubeSourceProvider.Title;
+                PlayerControl.ShowOsdText(YouTubeSourceProvider.Title, 3000);
+                PopulatePlaylist();
+            }
+            else
             {
                 Text = Player.State + " - " + CurrentItem.FilePath;
             }
@@ -3180,6 +3160,7 @@ namespace Mpdn.Extensions.PlayerExtensions.DataContracts
 
     public class PlaylistItem
     {
+        public string Title { get; set; }
         public string FilePath { get; set; }
         public bool Active { get; set; }
         public bool HasChapter { get; set; }

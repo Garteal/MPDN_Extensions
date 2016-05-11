@@ -28,6 +28,9 @@ namespace Mpdn.Extensions.PlayerExtensions
 {
     public class YouTubeSourceProvider : PlayerExtension
     {
+        public static string Title { get; private set; }
+        public static string Description { get; private set; }
+
         public override ExtensionUiDescriptor Descriptor
         {
             get
@@ -159,6 +162,15 @@ namespace Mpdn.Extensions.PlayerExtensions
                     VideoStreamSelect = (IAMStreamSelect) m_Splitter;
                     AudioStreamSelect = (IAMStreamSelect) m_Splitter;
                     SubtitleStreamSelect = null;
+
+                    string title;
+                    string description;
+                    var iamMediaContent = (IAMMediaContent)m_Filter;
+                    iamMediaContent.get_Title(out title);
+                    iamMediaContent.get_Description(out description);
+
+                    Title = title;
+                    Description = description;
                 }
                 finally
                 {
